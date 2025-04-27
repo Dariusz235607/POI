@@ -87,7 +87,6 @@ def klasyfikacja_figur(norm_wect, srednia_odleglosc, wartosc_prog=0.1):
     else:
         return "płaszczyzna pionowa"
 
-
 #MAIN
 def main():
     nazwapliku = "chmura_punktow.xyz"
@@ -96,7 +95,7 @@ def main():
 
     print("Wyniki analizy klas:")
 
-    #analiza każdego klastra osobno
+    #analiza każdego klastra punktow osobno
     for i in range(3):
         klasterpunktow_i = punkty[labels == i]
         normal, sredniaodl = RANSAC(klasterpunktow_i)
