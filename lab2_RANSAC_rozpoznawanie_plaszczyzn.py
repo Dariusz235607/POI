@@ -10,6 +10,7 @@ def wczytaj_chmury_xyz(nazwapliku):
     with open(nazwapliku, 'r') as file:
         reader = csv.reader(file, delimiter=' ')
         for row in reader:
+            # Konwersja współrzędnych tekstowych na liczby zmiennoprzecinkowe
             punkty.append([float(val) for val in row])
     return np.array(punkty)
 
@@ -21,12 +22,17 @@ def klasterpunktow(punkty, k=3):
     return labels
 
 
-#obliczenie równań płaszczyzny na podstawie 3 losowych punków
+#obliczenie równań płaszczyzny na podstawie 3 punków
+#równanie płaszczyzny: ax + by + cz + d = 0
 def rownanieplaszczyzny(p1, p2, p3):
+    #utworzenie wektorów płaszczyzny
     v1 = p2 - p1
     v2 = p3 - p1
+    #obliczenie wektora normalnego płaszczyzny (iloczyn wektorowy)
     normal = np.cross(v1, v2)
+    #normalizacja wektora normalnego (długość = 1)
     normal = normal / np.linalg.norm(normal)
+    #obliczenie współczynnika d z równania płaszczyzny
     d = -np.dot(normal, p1)
     return normal, d
 
@@ -38,17 +44,19 @@ def odlegloscipunktow(punkt, normal, d):
 
 #algorytm RANSAC do znajdowania płaszczyzn
 def RANSAC(punkty, i=100, wartosc_prog=1.0):
-    best_dopasowanie = []
-    best_basic = None
-    best_d = None
+    best_dopasowanie = []   #najlepszy zbiór punktów pasujących do płaszczyzny
+    best_basic = None       #najlepszy wektor normalny
+    best_d = None           #najlepszy współczynnik d
 
+    #Ransac
     for _ in range(i):
+        #losowy wybór 3 punktów do próbki
         probka = punkty[random.sample(range(len(punkty)), 3)]
         p1, p2, p3 = probka
         try:
             normal, d = rownanieplaszczyzny(p1, p2, p3)
         except:
-            continue
+            continue    #pomijanie jeżeli nie można obliczyć
 
         odleglosci = np.abs(np.dot(punkty, normal) + d)
         dopasowanie = punkty[odleglosci < wartosc_prog]
@@ -58,7 +66,7 @@ def RANSAC(punkty, i=100, wartosc_prog=1.0):
             best_basic = normal
             best_d = d
 
-    #średnia odległość inlierów
+    #średnia odległość punktów zgodnych od płaszczyzny
     if best_dopasowanie is not None and len(best_dopasowanie) > 0:
         odleglosci = [odlegloscipunktow(p, best_basic, best_d) for p in best_dopasowanie]
         srednia_odleglosc = np.mean(odleglosci)
@@ -88,6 +96,7 @@ def main():
 
     print("Wyniki analizy klas:")
 
+    #analiza każdego klastra osobno
     for i in range(3):
         klasterpunktow_i = punkty[labels == i]
         normal, sredniaodl = RANSAC(klasterpunktow_i)
